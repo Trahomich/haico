@@ -9,7 +9,8 @@ services:
     ports:
       - "4567:4567"
     env_file:
-      # Optional file with model API keys (OPENAI_API_KEY, ANTHROPIC_API_KEY, ...)
+      # Optional file with model API keys for bundled agent CLIs:
+      # ANTHROPIC_API_KEY, OPENAI_API_KEY, GEMINI_API_KEY, ...
       - path: .env
         required: false
     environment:
@@ -23,10 +24,13 @@ services:
       # HAICO_ORCHESTRATOR_ENGINE: "langgraph"   # langgraph | native
       # HAICO_EVENT_LOG: "on"
     volumes:
-      # SQLite DB + any state written under /data
+      # SQLite DB + fallback agent workspaces (container cwd)
       - haico-data:/data
-      # Uncomment to persist agent workspaces on the host instead:
-      # - ./workspaces:/data/workspaces
+      # Agent CLI configs & logins (~/.claude, ~/.codex, ~/.gemini, ~/.pi, ~/.config/omp)
+      - haico-agent-home:/home/haico
+      # Project workspaces for agents live on the host — mount them here and
+      # point agent working_directory at e.g. /workspaces/my-project:
+      # - ~/src:/workspaces
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:4567/"]
       interval: 30s
@@ -36,3 +40,4 @@ services:
 
 volumes:
   haico-data:
+  haico-agent-home:
