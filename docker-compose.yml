@@ -1,0 +1,38 @@
+services:
+  haico:
+    build:
+      context: .
+      # docker compose build --pull to refresh the base image
+    image: ghcr.io/trahomich/haico:latest
+    container_name: haico
+    restart: unless-stopped
+    ports:
+      - "4567:4567"
+    env_file:
+      # Optional file with model API keys (OPENAI_API_KEY, ANTHROPIC_API_KEY, ...)
+      - path: .env
+        required: false
+    environment:
+      HAICO_HOST: "0.0.0.0"
+      HAICO_PORT: "4567"
+      HAICO_DB_PATH: /data/haico.db
+      # --- first-boot admin (remove after initial setup) ---
+      # HAICO_DEFAULT_ADMIN: "true"
+      # HAICO_DEFAULT_ADMIN_PASSWORD: "change-me"
+      # --- orchestration ---
+      # HAICO_ORCHESTRATOR_ENGINE: "langgraph"   # langgraph | native
+      # HAICO_EVENT_LOG: "on"
+    volumes:
+      # SQLite DB + any state written under /data
+      - haico-data:/data
+      # Uncomment to persist agent workspaces on the host instead:
+      # - ./workspaces:/data/workspaces
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:4567/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  haico-data:
